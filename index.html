@@ -3,210 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K♥ - BEAUTY CONTEST (YOUTUBE-STYLE CAST)</title>
+    <title>K♥ - ULTIMATE CAST</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
-        :root { --bg: #030303; --text: #ffffff; --accent: #ff0000; }
-        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body { background: var(--bg); color: var(--text); margin: 0; text-transform: uppercase; overflow-x: hidden; }
+        :root { --bg: #000; --text: #fff; --accent: #ff0000; --gold: #ffd700; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; text-transform: uppercase; }
 
-        /* Role Selector - Initial Screen */
-        #role-selector {
-            position: fixed; inset: 0; background: #000; z-index: 1000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
-        }
-        .mode-btn { width: 80%; max-width: 300px; padding: 25px; border: 2px solid white; background: none; color: white; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
-        .mode-btn:active { background: white; color: black; }
+        /* Full Screen Button */
+        #fs-btn { position: fixed; top: 10px; left: 10px; z-index: 9999; background: rgba(255,255,255,0.2); border: 1px solid #fff; color: #fff; padding: 5px 10px; cursor: pointer; font-size: 12px; }
 
-        /* Containers */
-        #game-container { width: 100%; max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; }
-        .screen { display: none; flex-direction: column; height: 100%; padding: 20px; animation: fadeIn 0.4s ease; }
+        /* Role Selector */
+        #mode-selector { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .mode-btn { width: 80%; max-width: 300px; padding: 25px; border: 2px solid white; background: none; color: white; cursor: pointer; font-weight: bold; font-size: 1.2rem; transition: 0.3s; }
+        .mode-btn:hover { background: #fff; color: #000; }
+
+        /* Screens */
+        .screen { display: none; flex-direction: column; height: 100vh; width: 100vw; padding: 40px; justify-content: center; align-items: center; text-align: center; }
         .active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* TV UI Scaling */
-        body.is-tv #game-container { max-width: 100%; }
-        body.is-tv h1 { font-size: 4rem; margin-bottom: 40px; border-bottom: 5px solid white; }
-        body.is-tv .status-msg { font-size: 2.5rem; color: #ff0000; margin: 40px 0; }
-        body.is-tv .res-row { font-size: 1.8rem; padding: 20px; }
-        .controller-only { display: block; }
+        /* TV DESIGN - FULL CENTERED */
+        body.is-tv h1 { font-size: 5rem; letter-spacing: 15px; margin: 0; color: var(--text); }
+        body.is-tv .status-msg { font-size: 3.5rem; margin: 30px 0; color: var(--accent); font-weight: bold; }
+        body.is-tv .player-name { font-size: 6rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+
+        /* Registration List */
+        #p-list-display { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 80%; margin-top: 40px; }
+        .p-tag { padding: 15px 30px; border: 2px solid #fff; font-size: 1.5rem; background: rgba(255,255,255,0.1); }
+
+        /* Phone Controller UI */
+        .controller-only { display: block; width: 100%; max-width: 400px; }
         body.is-tv .controller-only { display: none !important; }
+        input { width: 100%; padding: 20px; font-size: 1.2rem; background: #111; border: 1px solid #fff; color: #fff; margin-bottom: 20px; text-align: center; }
 
-        /* Number Grid for Phone */
-        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: #333; padding: 2px; border: 1px solid white; margin: 10px 0; }
-        .num-btn { aspect-ratio: 1; background: #000; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border: 1px solid #222; cursor: pointer; }
-        .num-btn.selected { background: white; color: black; font-weight: bold; }
+        /* Grid for Phone */
+        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; width: 100%; margin: 20px 0; }
+        .num-btn { aspect-ratio: 1; background: #111; border: 1px solid #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
+        .num-btn.selected { background: #fff; color: #000; font-weight: bold; transform: scale(1.1); }
 
-        /* Results Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #333; padding: 12px; text-align: center; }
-        .winner { background: rgba(255, 255, 255, 0.2); color: #00ff00; }
-        .dead { color: #444; text-decoration: line-through; }
+        /* Result Board */
+        .res-container { width: 90%; max-width: 1200px; }
+        table { width: 100%; border-collapse: collapse; font-size: 1.5rem; }
+        th { border-bottom: 4px solid #fff; padding: 20px; }
+        td { padding: 20px; border-bottom: 1px solid #333; }
+        .winner-row { background: rgba(0,255,0,0.2); color: #0f0; }
+        .eliminated-row { color: #555; text-decoration: line-through; opacity: 0.5; }
 
-        button.main-btn { background: white; color: black; border: none; padding: 18px; font-weight: bold; letter-spacing: 2px; cursor: pointer; margin-top: 10px; font-size: 1rem; }
+        .main-btn { background: #fff; color: #000; border: none; padding: 20px; font-weight: bold; width: 100%; font-size: 1.2rem; cursor: pointer; margin-top: 10px; }
+        
+        /* Pass the phone alert */
+        #pass-alert { position: fixed; inset: 0; background: #ff0000; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
-<body>
+<body onclick="enableAudio()">
 
-    <div id="role-selector">
-        <h1 style="letter-spacing: 5px;">K♥ BEAUTY CONTEST</h1>
-        <button class="mode-btn" onclick="initGame('controller')">📱 PHONE MODE<br><small>(Controller)</small></button>
-        <button class="mode-btn" onclick="initGame('tv')">📺 TV MODE<br><small>(Display)</small></button>
+    <button id="fs-btn" onclick="toggleFS()">FULLSCREEN</button>
+
+    <div id="mode-selector">
+        <h1 style="font-size: 2.5rem; margin-bottom: 30px;">K♥ BEAUTY CONTEST</h1>
+        <button class="mode-btn" onclick="initGame('controller')">📱 CONTROLLER</button>
+        <button class="mode-btn" onclick="initGame('tv')">📺 TV DISPLAY</button>
+    </div>
+
+    <div id="pass-alert">
+        <h1 style="font-size: 3rem;">PASS THE PHONE</h1>
+        <h2 id="next-player-pass" style="font-size: 2rem;">TO: NAME</h2>
+        <button class="main-btn" style="width: 200px;" onclick="closePassAlert()">I AM READY</button>
     </div>
 
     <div id="game-container">
-        <div id="setup-screen" class="screen">
+        <div id="setup-screen" class="screen active">
             <h1>REGISTRATION</h1>
             <div class="controller-only">
-                <input type="text" id="p-input" placeholder="ENTER PLAYER NAME" style="width:100%; padding:15px; background:#111; border:1px solid white; color:white; margin-bottom:10px;">
-                <button class="main-btn" style="width:100%;" onclick="addPlayer()">ADD PLAYER</button>
-                <button class="main-btn" style="width:100%; background:red; color:white;" onclick="pushState('turn-screen')">START GAME</button>
+                <input type="text" id="p-input" placeholder="ENTER NAME">
+                <button class="main-btn" onclick="addPlayer()">ADD PLAYER</button>
+                <button class="main-btn" style="background:var(--accent); color:#fff;" onclick="startGame()">START GAME</button>
             </div>
-            <div id="p-list-display" style="margin-top:20px; font-size:1.2rem;"></div>
+            <div id="p-list-display"></div>
         </div>
 
-        <div id="turn-screen" class="screen" style="justify-content:center; text-align:center;">
-            <h1 id="active-p-name">---</h1>
-            <div class="status-msg" id="tv-status">IT IS YOUR TURN</div>
-            <p style="color:#666;" class="controller-only">OTHERS LOOK AWAY</p>
-            <button class="main-btn controller-only" onclick="showPad()">SELECT NUMBER</button>
+        <div id="turn-screen" class="screen">
+            <div class="status-msg" id="tv-status">NEXT TURN</div>
+            <div class="player-name" id="active-p-name">---</div>
+            <div class="controller-only" style="margin-top: 40px;">
+                <button class="main-btn" onclick="showPad()">OPEN SELECTION</button>
+            </div>
         </div>
 
         <div id="pad-screen" class="screen controller-only">
-            <h2 id="pad-owner">SELECT A NUMBER</h2>
+            <h2>SELECT YOUR NUMBER</h2>
             <div class="grid" id="pad-grid"></div>
             <button id="lock-btn" class="main-btn" disabled onclick="submitSelection()">LOCK SELECTION</button>
         </div>
 
         <div id="result-screen" class="screen">
-            <h1>ROUND RESULTS</h1>
-            <div id="target-box" style="background:white; color:black; padding:15px; font-size:1.5rem; font-weight:bold; margin-bottom:20px;">TARGET: --</div>
-            <div id="res-list"></div>
-            <button class="main-btn controller-only" onclick="nextRound()">NEXT ROUND</button>
+            <h1 style="font-size: 3rem;">ROUND RESULTS</h1>
+            <div id="target-box" style="font-size: 3rem; margin: 20px; border: 2px solid #fff; padding: 10px;">TARGET: --</div>
+            <div class="res-container">
+                <table id="res-table">
+                    <thead><tr><th>PLAYER</th><th>CHOICE</th><th>POINTS</th></tr></thead>
+                    <tbody id="res-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
 <script>
-    // --- CONNECTING TO ABLY ---
     const ABLY_KEY = 'WEUdeg.e-jGzA:u-dLUatgTPRUyLgP--exnIjK_t8UGDRCTsEjE8_PIJo';
     const ably = new Ably.Realtime(ABLY_KEY);
-    const channel = ably.channels.get('game-session-001');
+    const channel = ably.channels.get('beauty-contest-pro');
 
     let myRole = '';
-    let state = {
-        screen: 'setup-screen',
-        players: [],
-        turnIdx: 0,
-        tvMsg: 'READY TO START',
-        target: 0
-    };
+    let state = { screen: 'setup-screen', players: [], turnIdx: 0, target: 0, tvMsg: '', lastAnnounced: '' };
+    let audioEnabled = false;
 
-    // Listen for Sync
-    channel.subscribe('sync', (msg) => {
-        state = msg.data;
-        updateUI();
-    });
+    function enableAudio() { audioEnabled = true; }
+
+    function toggleFS() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    }
 
     function initGame(role) {
         myRole = role;
-        document.getElementById('role-selector').style.display = 'none';
+        document.getElementById('mode-selector').style.display = 'none';
         if(role === 'tv') document.body.classList.add('is-tv');
         updateUI();
     }
 
-    function pushState(screenName, extra = {}) {
-        state.screen = screenName;
-        Object.assign(state, extra);
-        channel.publish('sync', state);
+    function speak(text) {
+        if(myRole === 'tv' && audioEnabled) {
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.rate = 0.9; ut.pitch = 1;
+            window.speechSynthesis.speak(ut);
+        }
     }
 
-    function addPlayer() {
-        const name = document.getElementById('p-input').value;
-        if(!name) return;
-        state.players.push({ name: name, points: 0, choice: null, isDead: false });
-        document.getElementById('p-input').value = '';
-        pushState('setup-screen');
+    // --- SYNC ---
+    channel.subscribe('sync', (msg) => {
+        const oldScreen = state.screen;
+        const oldTurn = state.turnIdx;
+        state = msg.data;
+        
+        if(myRole === 'tv') {
+            handleAnnouncements(oldScreen, oldTurn);
+            if(state.screen === 'result-screen' && oldScreen !== 'result-screen') {
+                setTimeout(() => { if(myRole === 'tv') autoNext(); }, 10000);
+            }
+        }
+        updateUI();
+    });
+
+    function handleAnnouncements(oldScreen, oldTurn) {
+        const currentPlayer = state.players[state.turnIdx];
+        if(!currentPlayer) return;
+
+        if(state.screen === 'turn-screen' && (oldTurn !== state.turnIdx || oldScreen !== 'turn-screen')) {
+            speak(`${currentPlayer.name}'s turn.`);
+        }
+        if(state.tvMsg.includes('DECIDING') && !state.lastAnnounced.includes('DECIDING')) {
+            speak(`${currentPlayer.name} is deciding.`);
+            state.lastAnnounced = 'DECIDING';
+        }
     }
+
+    // --- CONTROLLER ACTIONS ---
+    function addPlayer() {
+        const n = document.getElementById('p-input').value;
+        if(!n) return;
+        state.players.push({ name: n, points: 0, choice: null, isDead: false });
+        document.getElementById('p-input').value = '';
+        push();
+    }
+
+    function startGame() { push('turn-screen', { tvMsg: 'GAME START' }); }
 
     function showPad() {
-        // Change Phone Screen only
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('setup-screen').classList.remove('active');
+        document.getElementById('turn-screen').classList.remove('active');
         document.getElementById('pad-screen').classList.add('active');
         
-        // Render Grid
         const grid = document.getElementById('pad-grid');
         grid.innerHTML = '';
-        let selected = null;
+        let sel = null;
         for(let i=0; i<=100; i++) {
             let b = document.createElement('div');
             b.className = 'num-btn'; b.innerText = i;
             b.onclick = () => {
                 document.querySelectorAll('.num-btn').forEach(x => x.classList.remove('selected'));
                 b.classList.add('selected');
-                selected = i;
-                state.tempChoice = i;
+                sel = i; state.tempChoice = i;
                 document.getElementById('lock-btn').disabled = false;
             };
             grid.appendChild(b);
         }
-        // Tell TV that player is thinking
-        channel.publish('sync', { ...state, tvMsg: 'IS CHOOSING...' });
+        push(state.screen, { tvMsg: `${state.players[state.turnIdx].name} IS DECIDING...` });
     }
 
     function submitSelection() {
         state.players[state.turnIdx].choice = state.tempChoice;
-        state.turnIdx++;
+        let nextIdx = state.turnIdx + 1;
+        
+        // Find next alive player
+        while(nextIdx < state.players.length && state.players[nextIdx].isDead) { nextIdx++; }
 
-        if(state.turnIdx >= state.players.length) {
-            calculateRound();
+        if(nextIdx >= state.players.length) {
+            calculate();
         } else {
-            pushState('turn-screen', { tvMsg: 'IT IS YOUR TURN' });
+            state.turnIdx = nextIdx;
+            document.getElementById('next-player-pass').innerText = `TO: ${state.players[nextIdx].name}`;
+            document.getElementById('pass-alert').style.display = 'flex';
         }
     }
 
-    function calculateRound() {
+    function closePassAlert() {
+        document.getElementById('pass-alert').style.display = 'none';
+        push('turn-screen', { tvMsg: 'IT IS YOUR TURN', lastAnnounced: '' });
+    }
+
+    function calculate() {
         const alive = state.players.filter(p => !p.isDead);
-        const choices = alive.map(p => p.choice);
-        const avg = choices.reduce((a, b) => a + b, 0) / choices.length;
+        const avg = alive.reduce((a, b) => a + b.choice, 0) / alive.length;
         const target = (avg * 0.8).toFixed(2);
         
-        state.players.forEach(p => {
-            if(!p.isDead && p.choice != Math.round(target)) p.points--;
-            if(p.points <= -10) p.isDead = true;
+        let winName = "NO ONE";
+        let minDiff = 999;
+        
+        state.players.forEach((p, i) => {
+            if(!p.isDead) {
+                let diff = Math.abs(p.choice - target);
+                if(diff < minDiff) { minDiff = diff; winName = p.name; }
+                if(p.choice != Math.round(target)) p.points--;
+                if(p.points <= -10) p.isDead = true;
+            }
         });
 
-        pushState('result-screen', { target: target, turnIdx: 0 });
+        speak(`Round over. Target is ${target}. ${winName} wins the round.`);
+        push('result-screen', { target: target, lastAnnounced: 'RESULTS' });
+    }
+
+    function autoNext() {
+        // Only trigger from controller to avoid sync loops
+        // But for auto-TV, we can just wait for the controller to press it
     }
 
     function nextRound() {
         state.players.forEach(p => p.choice = null);
-        pushState('turn-screen', { tvMsg: 'IT IS YOUR TURN', turnIdx: 0 });
+        let firstAlive = state.players.findIndex(p => !p.isDead);
+        push('turn-screen', { turnIdx: firstAlive, tvMsg: 'NEW ROUND' });
+    }
+
+    function push(scr = state.screen, extra = {}) {
+        state.screen = scr;
+        Object.assign(state, extra);
+        channel.publish('sync', state);
     }
 
     function updateUI() {
-        // Hide all
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        
-        // YouTube-style logic: If phone is on "Pad", TV stays on "Turn"
-        let current = state.screen;
-        if(myRole === 'tv' && current === 'pad-screen') current = 'turn-screen';
-        
-        document.getElementById(current).classList.add('active');
+        let cur = state.screen;
+        if(myRole === 'tv' && cur === 'pad-screen') cur = 'turn-screen';
+        document.getElementById(cur).classList.add('active');
 
-        // Sync Data
-        document.getElementById('p-list-display').innerHTML = state.players.map(p => `<div>${p.name}</div>`).join('');
-        
+        // Registration List
+        document.getElementById('p-list-display').innerHTML = state.players.map(p => 
+            `<div class="p-tag" style="${p.isDead ? 'border-color:red; color:red; text-decoration:line-through;' : ''}">${p.name}</div>`
+        ).join('');
+
+        // Turn Info
         if(state.players[state.turnIdx]) {
             document.getElementById('active-p-name').innerText = state.players[state.turnIdx].name;
             document.getElementById('tv-status').innerText = state.tvMsg;
         }
 
+        // Results
         if(state.screen === 'result-screen') {
             document.getElementById('target-box').innerText = "TARGET: " + state.target;
-            document.getElementById('res-list').innerHTML = state.players.map(p => `
-                <div class="res-row ${p.isDead ? 'dead' : ''}">
-                    ${p.name}: ${p.choice === null ? 'OUT' : p.choice} | PTS: ${p.points}
-                </div>
+            document.getElementById('res-body').innerHTML = state.players.map(p => `
+                <tr class="${p.isDead ? 'eliminated-row' : ''}">
+                    <td>${p.name} ${p.isDead ? '(ELIMINATED)' : ''}</td>
+                    <td>${p.choice ?? '---'}</td>
+                    <td>${p.points}</td>
+                </tr>
             `).join('');
         }
     }

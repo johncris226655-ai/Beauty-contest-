@@ -3,187 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>K♥ - ULTIMATE CAST</title>
+    <title>K♥ - BEAUTY CONTEST [AIB EDITION]</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
-        :root { --bg: #000; --text: #fff; --accent: #ff0000; --gold: #ffd700; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        
+        :root { --bg: #000; --text: #fff; --accent: #ff0000; --border: #333; }
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; text-transform: uppercase; }
 
-        /* Full Screen Button */
-        #fs-btn { position: fixed; top: 10px; left: 10px; z-index: 9999; background: rgba(255,255,255,0.2); border: 1px solid #fff; color: #fff; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+        /* Fullscreen Spade Button */
+        #fs-btn {
+            position: fixed; top: 10px; left: 10px; z-index: 9999;
+            width: 40px; height: 40px; cursor: pointer;
+            background: #000; border: 2px solid #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; border-radius: 5px; color: #fff;
+        }
 
         /* Role Selector */
-        #mode-selector { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
-        .mode-btn { width: 80%; max-width: 300px; padding: 25px; border: 2px solid white; background: none; color: white; cursor: pointer; font-weight: bold; font-size: 1.2rem; transition: 0.3s; }
-        .mode-btn:hover { background: #fff; color: #000; }
+        #role-selector {
+            position: fixed; inset: 0; background: #000; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
+        }
+        .mode-btn { 
+            width: 80%; max-width: 300px; padding: 20px; border: 2px solid #ff0000; 
+            background: none; color: #ff0000; cursor: pointer; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(255,0,0,0.3);
+        }
 
-        /* Screens */
-        .screen { display: none; flex-direction: column; height: 100vh; width: 100vw; padding: 40px; justify-content: center; align-items: center; text-align: center; }
+        /* Layouts */
+        .screen { display: none; flex-direction: column; height: 100vh; width: 100vw; padding: 40px; text-align: center; }
         .active { display: flex; }
+        h1 { font-size: 3rem; letter-spacing: 10px; border-bottom: 3px solid #fff; padding-bottom: 10px; margin-bottom: 30px; color: var(--accent); }
 
-        /* TV DESIGN - FULL CENTERED */
-        body.is-tv h1 { font-size: 5rem; letter-spacing: 15px; margin: 0; color: var(--text); }
-        body.is-tv .status-msg { font-size: 3.5rem; margin: 30px 0; color: var(--accent); font-weight: bold; }
-        body.is-tv .player-name { font-size: 6rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.5); }
-
-        /* Registration List */
-        #p-list-display { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 80%; margin-top: 40px; }
-        .p-tag { padding: 15px 30px; border: 2px solid #fff; font-size: 1.5rem; background: rgba(255,255,255,0.1); }
-
-        /* Phone Controller UI */
-        .controller-only { display: block; width: 100%; max-width: 400px; }
-        body.is-tv .controller-only { display: none !important; }
-        input { width: 100%; padding: 20px; font-size: 1.2rem; background: #111; border: 1px solid #fff; color: #fff; margin-bottom: 20px; text-align: center; }
-
-        /* Grid for Phone */
-        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; width: 100%; margin: 20px 0; }
-        .num-btn { aspect-ratio: 1; background: #111; border: 1px solid #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
-        .num-btn.selected { background: #fff; color: #000; font-weight: bold; transform: scale(1.1); }
-
-        /* Result Board */
-        .res-container { width: 90%; max-width: 1200px; }
-        table { width: 100%; border-collapse: collapse; font-size: 1.5rem; }
-        th { border-bottom: 4px solid #fff; padding: 20px; }
-        td { padding: 20px; border-bottom: 1px solid #333; }
-        .winner-row { background: rgba(0,255,0,0.2); color: #0f0; }
-        .eliminated-row { color: #555; text-decoration: line-through; opacity: 0.5; }
-
-        .main-btn { background: #fff; color: #000; border: none; padding: 20px; font-weight: bold; width: 100%; font-size: 1.2rem; cursor: pointer; margin-top: 10px; }
+        /* TV Specific (Alice in Borderland Style) */
+        body.is-tv h1 { font-size: 5rem; }
+        body.is-tv .status-big { font-size: 4rem; color: #fff; margin: 50px 0; text-shadow: 0 0 20px #ff0000; }
         
-        /* Pass the phone alert */
-        #pass-alert { position: fixed; inset: 0; background: #ff0000; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        /* Registration Grid */
+        #p-list-display {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; width: 100%; justify-items: center; align-items: center;
+        }
+        .p-card { border: 2px solid #fff; padding: 20px; min-width: 150px; font-size: 1.5rem; background: rgba(255,255,255,0.1); }
+        .p-card.dead { border-color: #444; color: #444; text-decoration: line-through; }
+
+        /* Number Grid (Phone Only) */
+        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-width: 500px; margin: 0 auto; }
+        .num-btn { 
+            aspect-ratio: 1; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; cursor: pointer; background: #000;
+        }
+        .num-btn.selected { background: #ff0000; color: #fff; border-color: #ff0000; box-shadow: 0 0 10px #ff0000; }
+
+        /* Special Rule Overlay (TV) */
+        #rule-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 2000;
+            display: none; flex-direction: column; justify-content: center; align-items: center; padding: 50px;
+        }
+        #rule-overlay.active { display: flex; }
+        .rule-text { font-size: 3rem; color: #ff0000; line-height: 1.5; border: 4px solid #fff; padding: 40px; }
+
+        .btn-main { background: #fff; color: #000; border: none; padding: 20px; font-weight: bold; width: 100%; max-width: 400px; margin: 10px auto; cursor: pointer; }
+        .controller-only { display: block; }
+        body.is-tv .controller-only { display: none !important; }
     </style>
 </head>
-<body onclick="enableAudio()">
+<body>
 
-    <button id="fs-btn" onclick="toggleFS()">FULLSCREEN</button>
+    <div id="fs-btn" onclick="toggleFS()">♠</div>
 
-    <div id="mode-selector">
-        <h1 style="font-size: 2.5rem; margin-bottom: 30px;">K♥ BEAUTY CONTEST</h1>
-        <button class="mode-btn" onclick="initGame('controller')">📱 CONTROLLER</button>
-        <button class="mode-btn" onclick="initGame('tv')">📺 TV DISPLAY</button>
-    </div>
-
-    <div id="pass-alert">
-        <h1 style="font-size: 3rem;">PASS THE PHONE</h1>
-        <h2 id="next-player-pass" style="font-size: 2rem;">TO: NAME</h2>
-        <button class="main-btn" style="width: 200px;" onclick="closePassAlert()">I AM READY</button>
+    <div id="role-selector">
+        <h1 style="color:white">K♥</h1>
+        <button class="mode-btn" onclick="init('controller')">PLAYER PHONE</button>
+        <button class="mode-btn" onclick="init('tv')">GAME MONITOR</button>
     </div>
 
     <div id="game-container">
-        <div id="setup-screen" class="screen active">
-            <h1>REGISTRATION</h1>
+        <div id="setup-screen" class="screen">
+            <h1>KING OF HEARTS</h1>
             <div class="controller-only">
-                <input type="text" id="p-input" placeholder="ENTER NAME">
-                <button class="main-btn" onclick="addPlayer()">ADD PLAYER</button>
-                <button class="main-btn" style="background:var(--accent); color:#fff;" onclick="startGame()">START GAME</button>
+                <input type="text" id="p-input" placeholder="ENTER PLAYER NAME" style="padding:15px; width:100%; max-width:400px; margin-bottom:10px;">
+                <button class="btn-main" onclick="addPlayer()">REGISTER PLAYER</button>
+                <button class="btn-main" style="background:red; color:white;" onclick="startGame()">START GAME</button>
             </div>
             <div id="p-list-display"></div>
         </div>
 
-        <div id="turn-screen" class="screen">
-            <div class="status-msg" id="tv-status">NEXT TURN</div>
-            <div class="player-name" id="active-p-name">---</div>
-            <div class="controller-only" style="margin-top: 40px;">
-                <button class="main-btn" onclick="showPad()">OPEN SELECTION</button>
+        <div id="turn-screen" class="screen" style="justify-content:center;">
+            <h1 id="active-p-name">PLAYER</h1>
+            <div class="status-big" id="tv-status">PLEASE WAIT...</div>
+            <div class="controller-only">
+                <p>PASS THE PHONE TO THE PLAYER NAMED ABOVE</p>
+                <button class="btn-main" onclick="openPad()">I AM THE PLAYER</button>
             </div>
         </div>
 
         <div id="pad-screen" class="screen controller-only">
-            <h2>SELECT YOUR NUMBER</h2>
+            <h2 id="pad-owner">CHOOSE YOUR NUMBER (0-100)</h2>
             <div class="grid" id="pad-grid"></div>
-            <button id="lock-btn" class="main-btn" disabled onclick="submitSelection()">LOCK SELECTION</button>
+            <button id="lock-btn" class="btn-main" disabled onclick="submitChoice()">LOCK SELECTION</button>
         </div>
 
         <div id="result-screen" class="screen">
-            <h1 style="font-size: 3rem;">ROUND RESULTS</h1>
-            <div id="target-box" style="font-size: 3rem; margin: 20px; border: 2px solid #fff; padding: 10px;">TARGET: --</div>
-            <div class="res-container">
-                <table id="res-table">
-                    <thead><tr><th>PLAYER</th><th>CHOICE</th><th>POINTS</th></tr></thead>
-                    <tbody id="res-body"></tbody>
-                </table>
-            </div>
+            <h1>ROUND OVER</h1>
+            <div id="target-box" style="font-size: 3rem; margin: 20px;">TARGET: --</div>
+            <div id="res-list" style="font-size: 2rem;"></div>
+            <p class="controller-only">NEXT ROUND STARTING SOON...</p>
+        </div>
+
+        <div id="rule-overlay">
+            <h2 style="color:white; font-size: 2rem;">BAGONG PANUNTUNAN (NEW RULE)</h2>
+            <div class="rule-text" id="rule-content">---</div>
+            <p style="margin-top:20px; font-size: 1.5rem;">NEXT ROUND IN: <span id="timer">30</span>s</p>
         </div>
     </div>
 
 <script>
     const ABLY_KEY = 'WEUdeg.e-jGzA:u-dLUatgTPRUyLgP--exnIjK_t8UGDRCTsEjE8_PIJo';
     const ably = new Ably.Realtime(ABLY_KEY);
-    const channel = ably.channels.get('beauty-contest-pro');
+    const channel = ably.channels.get('aib-beauty-contest-room');
 
     let myRole = '';
-    let state = { screen: 'setup-screen', players: [], turnIdx: 0, target: 0, tvMsg: '', lastAnnounced: '' };
-    let audioEnabled = false;
+    let state = {
+        screen: 'setup-screen',
+        players: [],
+        turnIdx: 0,
+        tvMsg: 'WAITING FOR PLAYERS',
+        target: 0,
+        showRule: false,
+        ruleText: '',
+        eliminatedThisRound: false
+    };
 
-    function enableAudio() { audioEnabled = true; }
+    const tagalogRules = [
+        "Kapag dalawang manlalaro na lamang ang natitira, ang numerong pinili ng isa na eksaktong kalahati ng pinili ng isa ay magpapanalo sa kanya.",
+        "Ang sinumang pipili ng numerong 0 ay may kapangyarihang talunin ang sinumang pipili ng numerong 100.",
+        "Kapag may tatlong manlalaro na lamang, ang numerong pinili ng higit sa isang tao ay agad na hindi bibilangin.",
+        "Sa oras na umabot sa -10 ang iyong puntos, ang laro ay magtatapos para sa iyo. GAME OVER."
+    ];
+
+    channel.subscribe('sync', (msg) => {
+        state = msg.data;
+        updateUI();
+    });
+
+    function init(role) {
+        myRole = role;
+        document.getElementById('role-selector').style.display = 'none';
+        if(role === 'tv') document.body.classList.add('is-tv');
+        updateUI();
+    }
 
     function toggleFS() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         else document.exitFullscreen();
     }
 
-    function initGame(role) {
-        myRole = role;
-        document.getElementById('mode-selector').style.display = 'none';
-        if(role === 'tv') document.body.classList.add('is-tv');
-        updateUI();
+    function push(scr, extra = {}) {
+        state.screen = scr;
+        Object.assign(state, extra);
+        channel.publish('sync', state);
     }
 
-    function speak(text) {
-        if(myRole === 'tv' && audioEnabled) {
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.rate = 0.9; ut.pitch = 1;
-            window.speechSynthesis.speak(ut);
-        }
-    }
-
-    // --- SYNC ---
-    channel.subscribe('sync', (msg) => {
-        const oldScreen = state.screen;
-        const oldTurn = state.turnIdx;
-        state = msg.data;
-        
-        if(myRole === 'tv') {
-            handleAnnouncements(oldScreen, oldTurn);
-            if(state.screen === 'result-screen' && oldScreen !== 'result-screen') {
-                setTimeout(() => { if(myRole === 'tv') autoNext(); }, 10000);
-            }
-        }
-        updateUI();
-    });
-
-    function handleAnnouncements(oldScreen, oldTurn) {
-        const currentPlayer = state.players[state.turnIdx];
-        if(!currentPlayer) return;
-
-        if(state.screen === 'turn-screen' && (oldTurn !== state.turnIdx || oldScreen !== 'turn-screen')) {
-            speak(`${currentPlayer.name}'s turn.`);
-        }
-        if(state.tvMsg.includes('DECIDING') && !state.lastAnnounced.includes('DECIDING')) {
-            speak(`${currentPlayer.name} is deciding.`);
-            state.lastAnnounced = 'DECIDING';
-        }
-    }
-
-    // --- CONTROLLER ACTIONS ---
     function addPlayer() {
-        const n = document.getElementById('p-input').value;
-        if(!n) return;
-        state.players.push({ name: n, points: 0, choice: null, isDead: false });
-        document.getElementById('p-input').value = '';
-        push();
+        const input = document.getElementById('p-input');
+        if(!input.value) return;
+        state.players.push({ name: input.value, points: 0, choice: null, isDead: false });
+        input.value = '';
+        push('setup-screen');
     }
 
-    function startGame() { push('turn-screen', { tvMsg: 'GAME START' }); }
+    function startGame() {
+        if(state.players.length < 2) return;
+        state.turnIdx = 0;
+        let p = state.players[state.turnIdx];
+        push('turn-screen', { tvMsg: 'IT IS YOUR TURN', announcer: p.name + " turn" });
+    }
 
-    function showPad() {
-        document.getElementById('setup-screen').classList.remove('active');
-        document.getElementById('turn-screen').classList.remove('active');
+    function openPad() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('pad-screen').classList.add('active');
-        
         const grid = document.getElementById('pad-grid');
         grid.innerHTML = '';
         let sel = null;
@@ -193,100 +192,142 @@
             b.onclick = () => {
                 document.querySelectorAll('.num-btn').forEach(x => x.classList.remove('selected'));
                 b.classList.add('selected');
-                sel = i; state.tempChoice = i;
+                sel = i;
+                state.currentChoice = i;
                 document.getElementById('lock-btn').disabled = false;
             };
             grid.appendChild(b);
         }
-        push(state.screen, { tvMsg: `${state.players[state.turnIdx].name} IS DECIDING...` });
+        let p = state.players[state.turnIdx];
+        channel.publish('sync', { ...state, tvMsg: 'IS DECIDING...', announcer: p.name + " deciding" });
     }
 
-    function submitSelection() {
-        state.players[state.turnIdx].choice = state.tempChoice;
-        let nextIdx = state.turnIdx + 1;
+    function submitChoice() {
+        state.players[state.turnIdx].choice = state.currentChoice;
+        state.turnIdx++;
         
-        // Find next alive player
-        while(nextIdx < state.players.length && state.players[nextIdx].isDead) { nextIdx++; }
+        // Skip dead players
+        while(state.turnIdx < state.players.length && state.players[state.turnIdx].isDead) {
+            state.turnIdx++;
+        }
 
-        if(nextIdx >= state.players.length) {
+        if(state.turnIdx >= state.players.length) {
             calculate();
         } else {
-            state.turnIdx = nextIdx;
-            document.getElementById('next-player-pass').innerText = `TO: ${state.players[nextIdx].name}`;
-            document.getElementById('pass-alert').style.display = 'flex';
+            let nextP = state.players[state.turnIdx];
+            push('turn-screen', { tvMsg: 'IT IS YOUR TURN', announcer: nextP.name + " turn" });
         }
-    }
-
-    function closePassAlert() {
-        document.getElementById('pass-alert').style.display = 'none';
-        push('turn-screen', { tvMsg: 'IT IS YOUR TURN', lastAnnounced: '' });
     }
 
     function calculate() {
         const alive = state.players.filter(p => !p.isDead);
-        const avg = alive.reduce((a, b) => a + b.choice, 0) / alive.length;
+        const choices = alive.map(p => p.choice);
+        const avg = choices.reduce((a, b) => a + b, 0) / choices.length;
         const target = (avg * 0.8).toFixed(2);
         
-        let winName = "NO ONE";
-        let minDiff = 999;
-        
-        state.players.forEach((p, i) => {
+        let elimCount = 0;
+        state.players.forEach(p => {
             if(!p.isDead) {
-                let diff = Math.abs(p.choice - target);
-                if(diff < minDiff) { minDiff = diff; winName = p.name; }
                 if(p.choice != Math.round(target)) p.points--;
-                if(p.points <= -10) p.isDead = true;
+                if(p.points <= -10) { p.isDead = true; elimCount++; }
             }
         });
 
-        speak(`Round over. Target is ${target}. ${winName} wins the round.`);
-        push('result-screen', { target: target, lastAnnounced: 'RESULTS' });
+        state.eliminatedThisRound = (elimCount > 0);
+        push('result-screen', { target: target, announcer: "Round ended. Results on monitor." });
+
+        // Auto-next round logic
+        setTimeout(() => {
+            if(state.eliminatedThisRound) {
+                push('rule-overlay', { 
+                    showRule: true, 
+                    ruleText: tagalogRules[Math.floor(Math.random()*tagalogRules.length)] 
+                });
+                startRuleTimer();
+            } else {
+                nextRound();
+            }
+        }, 10000);
     }
 
-    function autoNext() {
-        // Only trigger from controller to avoid sync loops
-        // But for auto-TV, we can just wait for the controller to press it
+    function startRuleTimer() {
+        let timeLeft = 30;
+        let t = setInterval(() => {
+            timeLeft--;
+            channel.publish('sync', { ...state, timer: timeLeft });
+            if(timeLeft <= 0) {
+                clearInterval(t);
+                nextRound();
+            }
+        }, 1000);
     }
 
     function nextRound() {
         state.players.forEach(p => p.choice = null);
-        let firstAlive = state.players.findIndex(p => !p.isDead);
-        push('turn-screen', { turnIdx: firstAlive, tvMsg: 'NEW ROUND' });
+        state.turnIdx = 0;
+        // Hanapin ang unang player na buhay
+        while(state.players[state.turnIdx] && state.players[state.turnIdx].isDead) state.turnIdx++;
+        
+        if(state.players.filter(p => !p.isDead).length <= 1) {
+            push('setup-screen', { tvMsg: "GAME OVER", announcer: "Game Over. All players eliminated." });
+        } else {
+            let nextP = state.players[state.turnIdx];
+            push('turn-screen', { tvMsg: 'IT IS YOUR TURN', announcer: nextP.name + " turn", showRule: false });
+        }
     }
 
-    function push(scr = state.screen, extra = {}) {
-        state.screen = scr;
-        Object.assign(state, extra);
-        channel.publish('sync', state);
+    function speak(txt) {
+        if(myRole === 'tv' && 'speechSynthesis' in window) {
+            const ut = new SpeechSynthesisUtterance(txt);
+            ut.lang = 'en-US';
+            ut.rate = 0.9;
+            window.speechSynthesis.speak(ut);
+        }
     }
 
     function updateUI() {
+        // Full Sync
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        let cur = state.screen;
-        if(myRole === 'tv' && cur === 'pad-screen') cur = 'turn-screen';
-        document.getElementById(cur).classList.add('active');
+        let curr = state.screen;
+        if(myRole === 'tv' && curr === 'pad-screen') curr = 'turn-screen';
+        document.getElementById(curr).classList.add('active');
+
+        // Rules
+        if(state.showRule) {
+            document.getElementById('rule-overlay').classList.add('active');
+            document.getElementById('rule-content').innerText = state.ruleText;
+            document.getElementById('timer').innerText = state.timer || 30;
+        } else {
+            document.getElementById('rule-overlay').classList.remove('active');
+        }
 
         // Registration List
-        document.getElementById('p-list-display').innerHTML = state.players.map(p => 
-            `<div class="p-tag" style="${p.isDead ? 'border-color:red; color:red; text-decoration:line-through;' : ''}">${p.name}</div>`
-        ).join('');
+        document.getElementById('p-list-display').innerHTML = state.players.map(p => `
+            <div class="p-card ${p.isDead ? 'dead' : ''}">
+                ${p.name}<br><small>PTS: ${p.points}</small>
+            </div>
+        `).join('');
 
-        // Turn Info
+        // Turn Screen
         if(state.players[state.turnIdx]) {
             document.getElementById('active-p-name').innerText = state.players[state.turnIdx].name;
             document.getElementById('tv-status').innerText = state.tvMsg;
         }
 
-        // Results
+        // Result Screen
         if(state.screen === 'result-screen') {
             document.getElementById('target-box').innerText = "TARGET: " + state.target;
-            document.getElementById('res-body').innerHTML = state.players.map(p => `
-                <tr class="${p.isDead ? 'eliminated-row' : ''}">
-                    <td>${p.name} ${p.isDead ? '(ELIMINATED)' : ''}</td>
-                    <td>${p.choice ?? '---'}</td>
-                    <td>${p.points}</td>
-                </tr>
+            document.getElementById('res-list').innerHTML = state.players.map(p => `
+                <div style="margin:10px; ${p.isDead ? 'color:red; text-decoration:line-through' : ''}">
+                    ${p.name} chose ${p.choice === null ? 'X' : p.choice} [Score: ${p.points}]
+                </div>
             `).join('');
+        }
+
+        // Announcement
+        if(state.announcer) {
+            speak(state.announcer);
+            state.announcer = null; // Prevent looping
         }
     }
 </script>

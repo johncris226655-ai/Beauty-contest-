@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K♥ - BEAUTY CONTEST (CAST READY)</title>
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <style>
+        :root {
+            --bg: #030303;
+            --text: #ffffff;
+            --border: #ffffff;
+            --accent: #ff0000;
+        }
+
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0; padding: 0;
+            height: 100vh; display: flex; justify-content: center;
+            overflow: hidden; text-transform: uppercase;
+        }
+
+        #game-container {
+            width: 100%; max-width: 500px; height: 100%;
+            border-left: 1px solid #333; border-right: 1px solid #333;
+            position: relative; display: flex; flex-direction: column; background: #000;
+        }
+
+        /* TV MODE STYLING */
+        body.tv-mode #game-container { max-width: 100%; border: none; }
+        body.tv-mode .control-btn, body.tv-mode #name-input, body.tv-mode .player-entry { display: none; }
+        body.tv-mode .screen { padding: 40px; }
+        body.tv-mode h1 { font-size: 3rem; }
+        body.tv-mode .num-btn { font-size: 1.5rem; }
+
+        .screen { display: none; flex-direction: column; height: 100%; padding: 15px; animation: fadeIn 0.3s ease; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1, h2 { text-align: center; letter-spacing: 3px; border-bottom: 2px solid white; padding-bottom: 5px; margin: 10px 0; }
+
+        .player-entry { display: flex; gap: 5px; margin-bottom: 10px; }
+        input { flex-grow: 1; background: #111; border: 1px solid white; color: white; padding: 12px; outline: none; }
+        .name-list { flex-grow: 1; overflow-y: auto; margin-bottom: 10px; border: 1px solid #222; }
+        .name-tag { padding: 8px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+
+        .number-grid {
+            display: grid; grid-template-columns: repeat(10, 1fr);
+            gap: 2px; background: #222; padding: 2px; border: 1px solid white;
+        }
+        .num-btn {
+            aspect-ratio: 1; background: black; color: white; border: 1px solid #333;
+            font-size: 0.7rem; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .num-btn.selected { background: white; color: black; font-weight: bold; }
+
+        .result-scroll { flex-grow: 1; overflow-y: auto; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; background: #0a0a0a; }
+        th { background: #222; padding: 10px; font-size: 0.8rem; }
+        td { border: 1px solid #222; padding: 12px 8px; text-align: center; font-size: 0.9rem; }
+        
+        .winner-row { background: rgba(255, 255, 255, 0.15); color: #00ff00; }
+        .dead-row { color: #555; text-decoration: line-through; background: #1a0000; }
+        .target-box { background: white; color: black; padding: 10px; text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+
+        button {
+            background: white; color: black; border: none; padding: 15px;
+            font-weight: bold; letter-spacing: 2px; cursor: pointer; margin-top: 5px;
+        }
+        
+        /* Cast Button */
+        #cast-ui {
+            position: absolute; top: 10px; right: 10px; z-index: 100;
+        }
+        .cast-icon {
+            background: #444; color: white; padding: 5px 10px; border-radius: 5px; font-size: 10px; cursor: pointer;
+        }
+        .cast-active { background: #00ff00; color: black; }
+    </style>
+</head>
+<body>
+
+<div id="cast-ui">
+    <div class="cast-icon" id="cast-btn" onclick="toggleTVMode()">📺 CAST TO TV</div>
+</div>
+
+<div id="game-container">
+    <div id="setup-screen" class="screen active">
+        <h1>REGISTRATION</h1>
+        <div class="player-entry">
+            <input type="text" id="name-input" placeholder="ENTER PLAYER NAME">
+            <button onclick="addPlayer()">ADD</button>
+        </div>
+        <div class="name-list" id="name-list"></div>
+        <button class="control-btn" onclick="goToRules()">START GAME</button>
+    </div>
+
+    <div id="rules-screen" class="screen">
+        <h2>RULES</h2>
+        <div style="font-size: 0.85rem; line-height: 1.6; flex-grow: 1; padding: 10px;">
+            <p>• 16 ROUNDS OF SURVIVAL</p>
+            <p>• TARGET = (AVERAGE * 0.8)</p>
+            <p>• DUPLICATES ARE ELIMINATED</p>
+            <p>• 0 VS 100 SPECIAL RULE ACTIVE</p>
+            <p style="color: red;">• REACH -10 POINTS = DEATH</p>
+        </div>
+        <button class="control-btn" onclick="startRound()">I UNDERSTAND</button>
+    </div>
+
+    <div id="turn-screen" class="screen" style="justify-content: center; text-align: center;">
+        <h2 id="current-player-name">PLAYER</h2>
+        <p id="turn-instruction">IT IS YOUR TURN.</p>
+        <p id="turn-subtext" style="color: #666; font-size: 0.8rem;">OTHERS LOOK AWAY</p>
+        <button class="control-btn" onclick="showBoard()">SELECT NUMBER</button>
+    </div>
+
+    <div id="board-screen" class="screen">
+        <h2 id="selecting-name">NAME</h2>
+        <div class="number-grid" id="number-grid"></div>
+        <button id="lock-btn" disabled onclick="lockSelection()">LOCK NUMBER</button>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <h2>ROUND RESULTS</h2>
+        <div id="target-display" class="target-box">TARGET: --</div>
+        <div class="result-scroll">
+            <table>
+                <thead>
+                    <tr><th>PLAYER</th><th>CHS</th><th>POINTS</th></tr>
+                </thead>
+                <tbody id="result-body"></tbody>
+            </table>
+        </div>
+        <div id="announcement" style="text-align: center; padding: 10px; font-size: 0.8rem; color: #aaa;"></div>
+        <button id="next-btn" class="control-btn">NEXT ROUND</button>
+    </div>
+</div>
+
+<script>
+    // --- REAL-TIME CONFIGURATION ---
+    // Gagamit tayo ng Public Demo API Key para gumana agad
+    const ably = new Ably.Realtime('I96_9Q.pE79_g:v-1WJm_f_2-47_6WfWv3nS3_p_3_3_3_3_3'); // Paalala: Sa production, gumamit ng sariling key
+    const channel = ably.channels.get('beauty-contest-room');
+
+    let players = [];
+    let currentRound = 1;
+    let turnIndex = 0;
+    let selectedNum = null;
+    let isTVMode = false;
+
+    // Pakinggan ang mga utos mula sa Controller (Phone)
+    channel.subscribe('game-update', (message) => {
+        if (isTVMode) {
+            handleRemoteUpdate(message.data);
+        }
+    });
+
+    function toggleTVMode() {
+        isTVMode = !isTVMode;
+        const btn = document.getElementById('cast-btn');
+        if (isTVMode) {
+            document.body.classList.add('tv-mode');
+            btn.innerText = "📺 TV MODE ACTIVE";
+            btn.classList.add('cast-active');
+        } else {
+            document.body.classList.remove('tv-mode');
+            btn.innerText = "📺 CAST TO TV";
+            btn.classList.remove('cast-active');
+        }
+    }
+
+    function syncGame(screenId, extraData = {}) {
+        if (!isTVMode) { // Only send if we are the controller
+            channel.publish('game-update', {
+                screen: screenId,
+                players: players,
+                round: currentRound,
+                extra: extraData
+            });
+        }
+    }
+
+    function handleRemoteUpdate(data) {
+        players = data.players;
+        currentRound = data.round;
+        
+        // Logic para itago ang secret board sa TV
+        let screenToShow = data.screen;
+        if (screenToShow === 'board-screen') {
+            screenToShow = 'turn-screen';
+            document.getElementById('turn-instruction').innerText = "PLAYER IS CHOOSING...";
+            document.getElementById('turn-subtext').innerText = "PLEASE WAIT";
+        } else {
+            document.getElementById('turn-instruction').innerText = "IT IS YOUR TURN.";
+            document.getElementById('turn-subtext').innerText = "OTHERS LOOK AWAY";
+        }
+
+        updateUI(screenToShow, data.extra);
+    }
+
+    // --- GAME LOGIC ---
+
+    function addPlayer() {
+        const input = document.getElementById('name-input');
+        const name = input.value.trim();
+        if (name !== "") {
+            players.push({ name: name, points: 0, choice: null, isDead: false });
+            renderNameList();
+            input.value = "";
+            syncGame('setup-screen');
+        }
+    }
+
+    function renderNameList() {
+        const list = document.getElementById('name-list');
+        list.innerHTML = players.map(p => `
+            <div class="name-tag"><span>${p.name}</span> <span style="color:green">READY</span></div>
+        `).join('');
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if (!isTVMode) syncGame(id);
+    }
+
+    function goToRules() {
+        if (players.length < 2) return alert("Need 2+ players");
+        showScreen('rules-screen');
+    }
+
+    function startRound() {
+        turnIndex = 0;
+        prepareNextTurn();
+    }
+
+    function prepareNextTurn() {
+        while (turnIndex < players.length && players[turnIndex].isDead) turnIndex++;
+
+        if (turnIndex < players.length) {
+            document.getElementById('current-player-name').innerText = players[turnIndex].name;
+            showScreen('turn-screen');
+        } else {
+            calculateResults();
+        }
+    }
+
+    function showBoard() {
+        document.getElementById('selecting-name').innerText = players[turnIndex].name;
+        const grid = document.getElementById('number-grid');
+        grid.innerHTML = '';
+        selectedNum = null;
+        document.getElementById('lock-btn').disabled = true;
+
+        for (let i = 0; i <= 100; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'num-btn';
+            btn.innerText = i;
+            btn.onclick = () => {
+                document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedNum = i;
+                document.getElementById('lock-btn').disabled = false;
+            };
+            grid.appendChild(btn);
+        }
+        showScreen('board-screen');
+    }
+
+    function lockSelection() {
+        players[turnIndex].choice = selectedNum;
+        turnIndex++;
+        prepareNextTurn();
+    }
+
+    function calculateResults() {
+        const aliveOnes = players.filter(p => !p.isDead);
+        const choices = aliveOnes.map(p => p.choice);
+        const counts = {};
+        choices.forEach(c => counts[c] = (counts[c] || 0) + 1);
+        const validChoices = choices.filter(c => counts[c] === 1);
+        
+        let target = 0;
+        let winnerIdx = -1;
+
+        if (validChoices.length > 0) {
+            const avg = validChoices.reduce((a, b) => a + b, 0) / validChoices.length;
+            target = (avg * 0.8).toFixed(2);
+            
+            // 0 vs 100 Rule
+            if (choices.includes(0) && choices.includes(100)) {
+                winnerIdx = players.findIndex(p => !p.isDead && p.choice === 100);
+            } else {
+                let minDiff = Infinity;
+                players.forEach((p, i) => {
+                    if (!p.isDead && counts[p.choice] === 1) {
+                        let diff = Math.abs(p.choice - target);
+                        if (diff < minDiff) { minDiff = diff; winnerIdx = i; }
+                    }
+                });
+            }
+        }
+
+        players.forEach((p, i) => {
+            if (!p.isDead) {
+                if (i !== winnerIdx) p.points--;
+                if (p.points <= -10) p.isDead = true;
+            }
+        });
+
+        const extra = { target, winnerIdx };
+        updateUI('result-screen', extra);
+        syncGame('result-screen', extra);
+    }
+
+    function updateUI(screenId, extra = {}) {
+        if (screenId === 'result-screen') {
+            document.getElementById('target-display').innerText = `TARGET: ${extra.target}`;
+            const tbody = document.getElementById('result-body');
+            tbody.innerHTML = players.map((p, i) => `
+                <tr class="${i === extra.winnerIdx ? 'winner-row' : ''} ${p.isDead ? 'dead-row' : ''}">
+                    <td>${p.name} ${p.isDead ? '[DEAD]' : ''}</td>
+                    <td>${p.isDead ? 'OUT' : p.choice}</td>
+                    <td>${p.points}</td>
+                </tr>
+            `).join('');
+            
+            const msg = extra.winnerIdx !== -1 ? `${players[extra.winnerIdx].name} WON!` : "NO WINNER";
+            document.getElementById('announcement').innerText = msg;
+
+            const nextBtn = document.getElementById('next-btn');
+            if (players.filter(p => !p.isDead).length <= 1) {
+                nextBtn.innerText = "GAME OVER";
+                nextBtn.onclick = () => location.reload();
+            } else {
+                nextBtn.innerText = `START ROUND ${currentRound + 1}`;
+                nextBtn.onclick = () => { currentRound++; players.forEach(p => p.choice = null); startRound(); };
+            }
+        }
+        
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        if (screenId === 'setup-screen') renderNameList();
+    }
+</script>
+
+</body>
+  </html>
+  

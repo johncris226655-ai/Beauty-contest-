@@ -6,10 +6,9 @@
     <title>THE 0.8 | K♠</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
-        /* Alice in Borderland Aesthetic */
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;500;700&display=swap');
 
-        :root { --bg: #000000; --text: #ffffff; --red: #ff0000; --gray: #1a1a1a; }
+        :root { --bg: #000000; --text: #ffffff; --red: #ff0000; }
         * { box-sizing: border-box; font-family: 'Oswald', sans-serif; letter-spacing: 2px; }
         
         body { background: var(--bg); color: var(--text); margin: 0; text-transform: uppercase; overflow: hidden; }
@@ -21,49 +20,43 @@
             clip-path: polygon(50% 0%, 100% 70%, 75% 70%, 75% 100%, 25% 100%, 25% 70%, 0% 70%);
         }
 
-        /* Role Selector */
         #role-selector {
             position: fixed; inset: 0; background: #000; z-index: 1000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
+
         .mode-btn { 
             width: 280px; padding: 20px; border: 1px solid #fff; background: none; 
             color: #fff; cursor: pointer; font-size: 1.2rem; margin: 10px; transition: 0.3s;
         }
-        .mode-btn:hover { background: #fff; color: #000; }
 
         .screen { display: none; flex-direction: column; height: 100vh; width: 100vw; padding: 40px; align-items: center; justify-content: center; text-align: center; }
-        .active { display: flex; }
+        .active { display: flex !important; }
 
-        h1 { font-size: 4rem; font-weight: 700; margin: 0; color: var(--text); }
+        h1 { font-size: 4rem; font-weight: 700; margin: 0; }
         .red-text { color: var(--red); }
 
-        /* Registration */
-        input { background: none; border: none; border-bottom: 2px solid #fff; color: #fff; font-size: 1.8rem; text-align: center; width: 80%; outline: none; margin-bottom: 30px; }
+        /* Grid for Phone */
+        .grid-wrapper { flex-grow: 1; overflow-y: auto; width: 100%; max-width: 450px; margin: 20px 0; border: 1px solid #222; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; }
+        .num-btn { aspect-ratio: 1; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .num-btn.selected { background: var(--red); border-color: #fff; }
 
-        /* Number Grid (Phone Only) */
-        .grid-wrapper { flex-grow: 1; overflow-y: auto; width: 100%; max-width: 500px; margin: 20px 0; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 10px; }
-        .num-btn { aspect-ratio: 1; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; }
-        .num-btn.selected { background: var(--red); border-color: var(--red); transform: scale(1.1); }
+        /* Results Display (TV) */
+        .res-table { width: 90%; max-width: 1200px; border-collapse: collapse; margin-top: 30px; }
+        .res-table th { font-size: 1.8rem; border-bottom: 2px solid #fff; padding: 15px; }
+        .res-table td { font-size: 3rem; padding: 15px; border-bottom: 1px solid #222; }
+        .eliminated { color: #222 !important; text-decoration: line-through; }
 
-        /* Results Table (TV Only) */
-        .res-table { width: 100%; max-width: 1200px; border-collapse: collapse; margin-top: 50px; }
-        .res-table th { font-size: 1.5rem; padding: 20px; border-bottom: 2px solid #fff; }
-        .res-table td { font-size: 2.5rem; padding: 20px; border-bottom: 1px solid #222; }
-        .eliminated { color: #333 !important; text-decoration: line-through; }
-        
         /* Rule Overlay */
         #rules-overlay {
             position: fixed; inset: 0; background: #000; z-index: 5000;
-            display: none; flex-direction: column; justify-content: center; align-items: center; padding: 60px;
+            display: none; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center;
         }
-        #rules-overlay h2 { font-size: 3rem; color: var(--red); }
-        #rules-overlay p { font-size: 2.5rem; line-height: 1.4; }
 
         .controller-only { display: block; }
         body.is-tv .controller-only { display: none !important; }
-        body.is-tv .tv-extra-large { font-size: 7rem !important; }
+        input { background: none; border: none; border-bottom: 2px solid #fff; color: #fff; font-size: 2rem; text-align: center; width: 80%; outline: none; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -72,14 +65,13 @@
 
     <div id="role-selector">
         <h1 class="red-text">THE 0.8</h1>
-        <p>A GAME OF HEARTS</p>
         <button class="mode-btn" onclick="init('controller')">CONTROLLER</button>
         <button class="mode-btn" onclick="init('tv')">TV DISPLAY</button>
     </div>
 
     <div id="rules-overlay">
-        <h2>NEW RULE</h2>
-        <p id="rule-text"></p>
+        <h2 class="red-text" style="font-size: 3rem;">NEW RULE</h2>
+        <p id="rule-text" style="font-size: 2.2rem;"></p>
     </div>
 
     <div id="game-container">
@@ -90,15 +82,15 @@
                 <button class="mode-btn" onclick="addPlayer()">REGISTER</button>
                 <button class="mode-btn" style="border-color: red;" onclick="pushState('turn-screen')">START GAME</button>
             </div>
-            <div id="p-list" style="margin-top:40px; font-size:1.5rem;"></div>
+            <div id="p-list" style="margin-top:20px; font-size:1.5rem;"></div>
         </div>
 
         <div id="turn-screen" class="screen">
-            <h1 id="active-p" class="tv-extra-large">---</h1>
-            <h2 id="tv-msg" style="font-weight: 300;">PREPARE</h2>
+            <h1 id="active-p" style="font-size: 6rem;">---</h1>
+            <h2 id="tv-msg" style="font-weight: 300; font-size: 2.5rem;">PREPARE</h2>
             <div class="controller-only">
-                <p>PASS THE PHONE TO THE PLAYER</p>
-                <button class="mode-btn" onclick="showSecretPad()">I AM THE PLAYER</button>
+                <p>PASS THE PHONE</p>
+                <button class="mode-btn" onclick="openSecretPad()">I AM THE PLAYER</button>
             </div>
         </div>
 
@@ -111,7 +103,7 @@
         </div>
 
         <div id="result-screen" class="screen">
-            <h1 class="red-text" id="target-ui" style="font-size: 8rem;">0.00</h1>
+            <h1 class="red-text" id="target-ui" style="font-size: 10rem; margin: 0;">0.00</h1>
             <table class="res-table">
                 <thead><tr><th>PLAYER</th><th>CHOICE</th><th>POINTS</th></tr></thead>
                 <tbody id="res-body"></tbody>
@@ -120,23 +112,23 @@
 
         <div id="phone-wait-screen" class="screen">
             <h1 class="red-text">ROUND ENDED</h1>
-            <p>LOOK AT THE TV FOR RESULTS</p>
-            <p style="font-size: 0.8rem; color: #444;">NEXT ROUND IS STARTING...</p>
+            <p>CHECK THE TV FOR RESULTS</p>
         </div>
     </div>
 
 <script>
     const ABLY_KEY = 'WEUdeg.e-jGzA:u-dLUatgTPRUyLgP--exnIjK_t8UGDRCTsEjE8_PIJo';
     const ably = new Ably.Realtime(ABLY_KEY);
-    const channel = ably.channels.get('the-0-8-session');
+    const channel = ably.channels.get('the-0-8-main');
 
     let myRole = '';
+    let isChoosing = false; // Fix: Stop auto-refreshing phone screen during choice
     let state = {
         screen: 'setup-screen',
         players: [],
         turnIdx: 0,
         target: 0,
-        tvMsg: 'WAITING',
+        tvMsg: 'PREPARE',
         isRuleActive: false,
         currentRule: ''
     };
@@ -144,11 +136,12 @@
     const rules = [
         "Kapag dalawang manlalaro ang pumili ng parehong numero, invalid ang kanilang boto.",
         "Ang manlalarong aabot sa -10 points ay agad na mae-eliminate.",
-        "Sa oras na may ma-eliminate, ang target multiplier ay mananatili sa 0.8.",
-        "Ang player na may pinakamalayong sagot sa target ay babawasan ng 1 point."
+        "Ang player na may pinakamalayong sagot sa target ay babawasan ng 1 point.",
+        "Sa oras na may ma-eliminate, ang target multiplier ay mananatili sa 0.8."
     ];
 
     channel.subscribe('sync', (msg) => {
+        if (isChoosing && myRole === 'controller') return; // Don't allow sync to overwrite phone pad
         state = msg.data;
         render();
     });
@@ -168,7 +161,7 @@
     function speak(text) {
         if (myRole === 'tv') {
             const ut = new SpeechSynthesisUtterance(text);
-            ut.rate = 0.8;
+            ut.rate = 0.85;
             window.speechSynthesis.speak(ut);
         }
     }
@@ -187,8 +180,8 @@
         pushState('setup-screen');
     }
 
-    function showSecretPad() {
-        // Phone only transition
+    function openSecretPad() {
+        isChoosing = true; // Block sync
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('pad-screen').classList.add('active');
         
@@ -207,13 +200,15 @@
         }
         
         const name = state.players[state.turnIdx].name;
+        // Tell TV that player is deciding, but don't change screen for everyone
         channel.publish('sync', { ...state, tvMsg: `${name} IS DECIDING...`, tts: `${name} is deciding` });
     }
 
     function submitChoice() {
         state.players[state.turnIdx].choice = state.tempChoice;
         state.turnIdx++;
-        
+        isChoosing = false; // Release sync block
+
         while(state.players[state.turnIdx] && state.players[state.turnIdx].isDead) state.turnIdx++;
 
         if(state.turnIdx >= state.players.length) {
@@ -225,8 +220,7 @@
 
     function calculate() {
         const alive = state.players.filter(p => !p.isDead);
-        const choices = alive.map(p => p.choice);
-        const avg = choices.reduce((a,b)=>a+b, 0) / choices.length;
+        const avg = alive.reduce((a,b)=>a + (b.choice || 0), 0) / alive.length;
         const target = (avg * 0.8).toFixed(2);
         
         let died = false;
@@ -261,33 +255,34 @@
     }
 
     function render() {
-        // Rules Overlay Sync
+        if (isChoosing && myRole === 'controller') return;
+
+        // Rules Overlay
         document.getElementById('rules-overlay').style.display = state.isRuleActive ? 'flex' : 'none';
         document.getElementById('rule-text').innerText = state.currentRule;
 
-        // TTS Sync
+        // TTS
         if(state.tts) { speak(state.tts); state.tts = null; }
         if(state.screen === 'turn-screen' && state.tvMsg === 'PREPARE') {
-            speak(`${state.players[state.turnIdx]?.name}, it is your turn.`);
+            speak(`${state.players[state.turnIdx]?.name}, your turn.`);
         }
 
-        // Screen Syncing
+        // Screen Logic
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
         let display = state.screen;
         if(myRole === 'tv') {
             if(display === 'pad-screen') display = 'turn-screen';
         } else {
-            // Phone specific views
             if(display === 'result-screen') display = 'phone-wait-screen';
         }
         
         const active = document.getElementById(display);
         if(active) active.classList.add('active');
 
-        // Data Rendering
+        // Render Data
         document.getElementById('p-list').innerHTML = state.players.map(p => 
-            `<div style="color:${p.isDead?'#222':'#fff'}">${p.name} [${p.points}]</div>`).join('');
+            `<div style="color:${p.isDead?'#111':'#fff'}">${p.name} [${p.points}]</div>`).join('');
 
         if(state.players[state.turnIdx]) {
             document.getElementById('active-p').innerText = state.players[state.turnIdx].name;
